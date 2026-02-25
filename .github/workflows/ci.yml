@@ -1,0 +1,33 @@
+name: Integracao Continua (CI)
+
+on:
+  push:
+    branches: [ main ]  # Executa sempre que houver push na main
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest # O GitHub fornece uma máquina temporária
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd backend && npm install
+      - name: Testar Backend (Placeholder)
+        run: echo "Backend pronto para deploy!"
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd frontend && npm install
+      - run: cd frontend && npm run build
+      - name: Testar Frontend
+        run: echo "Build do React gerado com sucesso!"

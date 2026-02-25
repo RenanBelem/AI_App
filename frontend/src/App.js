@@ -5,7 +5,7 @@ function App() {
 
   useEffect(() => {
     // No Codespaces, usamos o endereço local enquanto desenvolvemos
-    fetch('http://localhost:5000/api/mensagem')
+    fetch('https://musical-giggle-xg6gxw69442x66-5000.app.github.dev/')
       .then(response => response.json())
       .then(data => setMensagem(data.texto))
       .catch(err => setMensagem("Erro ao conectar ao back"));
