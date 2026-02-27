@@ -1,4 +1,4 @@
-name: Integracao Continua (CI)
+name: Deploy para Meu Runner de IA
 
 on:
   push:
@@ -31,3 +31,23 @@ jobs:
       - run: cd frontend && npm run build
       - name: Testar Frontend
         run: echo "Build do React gerado com sucesso!"
+
+  deploy:
+    needs: [build-backend, build-frontend] # <-- OBRIGATÓRIO: Espera os testes passarem
+    runs-on: self-hosted 
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Atualizar Dependencias e Build
+        run: |
+          cd backend && npm install
+          cd ../frontend && npm install && npm run build
+          
+      - name: Rodar Backend com IA via PM2
+        run: |
+          cd backend
+          # Instala o PM2 globalmente no seu Runner (só precisa rodar uma vez, mas não faz mal deixar aqui)
+          npm install -g pm2
+          
+          # Passa a variável de ambiente e inicia/reinicia o app com PM2
+          IA_API_KEY=${{ secrets.IA_API_KEY }} pm2 start server.js --name "meu-backend-ia" --update-env || pm2 restart "meu-backend-ia" --update-env
