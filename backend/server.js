@@ -11,8 +11,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuração do Multer (Guarda o ficheiro temporariamente na memória RAM)
-const upload = multer({ storage: multer.memoryStorage() });
+// Cria uma pasta temporária para arquivos grandes
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+
+// Configura o Multer para salvar no disco, aguentando arquivos de até 50MB
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
+  },
+  filename: function (req, file, cb) {
+    cb(null, 'temp-' + Date.now() + '.pdf')
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // Trava de segurança: 50 Megabytes
+});
 
 const genAI = new GoogleGenerativeAI(process.env.IA_API_KEY);
 const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -94,9 +112,13 @@ app.post('/api/upload-pdf', upload.single('documento'), async (req, res) => {
 
     // --- DAQUI PARA BAIXO, O NODE.JS TRABALHA SOZINHO NOS BASTIDORES ---
     
-    // 1. Extrai o texto do PDF
-    const data = await pdf(req.file.buffer);
+    // 1. Extrai o texto lendo o arquivo que foi salvo no disco
+    const dataBuffer = fs.readFileSync(req.file.path);
+    const data = await pdf(dataBuffer);
     const textoCompleto = data.text;
+
+    // Apaga o arquivo temporário do disco imediatamente após ler o texto para economizar espaço
+    fs.unlinkSync(req.file.path);
 
     // 2. Fatiamento
     const pedacos = textoCompleto.split('\n\n').filter(p => p.trim().length > 50);
