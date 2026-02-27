@@ -43,21 +43,15 @@ async function iniciarIngestao() {
     console.log(`📚 Cofre atual tem ${bancoDeConhecimento.length} fatias.`);
     console.log(`📁 Encontrados ${arquivos.length} PDFs para processar.`);
 
-    // Loop pelos arquivos
+    // Loop pelos arquivos (Foi essa parte que havia sumido)
     for (const nomeArquivo of arquivos) {
         console.log(`\n========================================`);
         console.log(`📖 Abrindo: ${nomeArquivo}`);
         
-        // Trava Anti-Duplicação
-        const jaExiste = bancoDeConhecimento.some(doc => doc.titulo.includes(nomeArquivo));
-        if (jaExiste) {
-            console.log(`⏩ Pulando '${nomeArquivo}' (Já existe no cofre).`);
-            continue;
-        }
-
         const caminhoPDF = path.join(PASTA_DOCUMENTOS, nomeArquivo);
         
         try {
+            // Lendo e fatiando o PDF atual
             const dataBuffer = fs.readFileSync(caminhoPDF);
             const data = await pdf(dataBuffer);
             const textoCompleto = data.text;
@@ -65,9 +59,18 @@ async function iniciarIngestao() {
             const pedacos = textoCompleto.split('\n\n').filter(p => p.trim().length > 50);
             console.log(`🔪 Fatiado em ${pedacos.length} partes. Traduzindo para IA...`);
 
-            // Loop das fatias (Mantemos o delay de 3s porque o limite da API do Google continua existindo!)
+            // Loop das fatias
             for (let i = 0; i < pedacos.length; i++) {
                 const trecho = pedacos[i].trim();
+                const tituloFatia = `${nomeArquivo} (Parte ${i + 1})`; // O nome exato desta parte
+                
+                // NOVA TRAVA INTELIGENTE: Verifica se ESTA fatia específica já foi salva antes
+                const fatiaJaExiste = bancoDeConhecimento.some(doc => doc.titulo === tituloFatia);
+                
+                if (fatiaJaExiste) {
+                    process.stdout.write(`\r⏩ Fatia ${i + 1}/${pedacos.length} já existe no cofre. Pulando...`);
+                    continue; // Pula o processamento do Google e vai para o próximo i
+                }
                 
                 process.stdout.write(`\r⏳ Fatias processadas: ${i + 1}/${pedacos.length}`);
                 
@@ -76,7 +79,7 @@ async function iniciarIngestao() {
                     
                     bancoDeConhecimento.push({
                         id: Date.now() + i,
-                        titulo: `${nomeArquivo} (Parte ${i + 1})`,
+                        titulo: tituloFatia,
                         texto: trecho,
                         vetor: result.embedding.values
                     });
@@ -92,9 +95,9 @@ async function iniciarIngestao() {
                 }
             }
             
-            // Salva o progresso a cada arquivo finalizado
+            // Salva o progresso no JSON
             fs.writeFileSync(ARQUIVO_BANCO, JSON.stringify(bancoDeConhecimento, null, 2), 'utf-8');
-            console.log(`\n✅ Arquivo '${nomeArquivo}' salvo com sucesso!`);
+            console.log(`\n✅ Arquivo '${nomeArquivo}' salvo/atualizado com sucesso!`);
 
         } catch (error) {
             console.log(`\n❌ Falha ao ler o PDF '${nomeArquivo}':`, error.message);
