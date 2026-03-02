@@ -1,5 +1,2 @@
-# Blindar a chave da IA do Google
+#blindar a chave da api
 .env
-
-# Ignorar a pasta pesada de bibliotecas do Node.js (Isso é muito importante!)
-node_modules/
