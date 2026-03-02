@@ -118,7 +118,7 @@ def processar_pdf_background(caminho_arquivo: str, nome_original: str, apagar_ar
             os.remove(caminho_arquivo)
 
 def ler_pasta_background():
-    PASTA = "meus_documentos_teste"
+    PASTA = "meus_documentos"
     if not os.path.exists(PASTA):
         print(f"⚠️ Pasta '{PASTA}' não encontrada.")
         return

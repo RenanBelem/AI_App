@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/workspaces/Agents_to_Get_Cities_Public_Indicators/backend-python/venv"
+set -gx VIRTUAL_ENV "/workspaces/Agents_to_Get_Cities_Public_Indicators/backend/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
